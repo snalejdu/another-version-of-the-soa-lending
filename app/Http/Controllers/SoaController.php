@@ -1,44 +1,45 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Account;
-use Illuminate\Support\Facades\Log;
+use App\Mail\SoaManagement;
 use Illuminate\Support\Facades\Mail;
 
 class SoaController extends Controller
 {
+
     public function soaGeneration()
     {
-        $accounts = $this->getAccountsForSOA();
+        $accounts = Account::with('customer')
+            ->whereDay('start_date', now()->addDays(10)->day)
+            ->get();
 
-        return view('soa.index',[
+        return view('soa.index', [
             'accounts' => $accounts
         ]);
     }
 
+
     public function generateAllSOAs()
     {
-        $accounts = $this->getAccountsForSOA();
+        Account::with('customer')
+            ->whereDay('start_date', now()->addDays(10)->day)
+            ->chunk(50, function ($accounts) {
 
-        foreach ($accounts as $account) {
+// i use chunk() to limit account that Render
 
-             $mail = new \App\Mail\SoaManagement($account);
-             Mail::to($account->customer->email)->queue($mail);
+                foreach ($accounts as $account) {
+                    Mail::to($account->customer->email)
+                        ->queue(new SoaManagement($account));
+                }
 
-            // Log::info("Generating SOA for Account ID: {$account->id}, Account Number: {$account->account_number}");
-            // Log::info("Generating SOA for Account ID: {$account->id}, Account Number: {$account->account_number}");
+            });
 
-        }
-
-        return redirect()->route('soa.index')->with('status', 'All SOAs have been generated successfully.');
-    }
-
-    private function getAccountsForSOA()
-    {
-        // return Account::whereDay('start_date', now()->day)->get();
-        // return Account::whereDay('start_date', 23)->get();
-        // return Account::whereDay('start_date', 23)->get();
-            return Account::whereDay('start_date', \Carbon\Carbon::now()->addDays(10)->day)->get();
+        return redirect()
+            ->route('soa.index')
+            ->with('status', 'All SOAs have been queued successfully.');
     }
 }
+
+// return Account::whereDay('start_date', 23)->get();
