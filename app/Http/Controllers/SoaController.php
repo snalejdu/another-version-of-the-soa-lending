@@ -1,12 +1,10 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Account;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use App\Jobs\SoaDelay;
 
 class SoaController extends Controller
 {
@@ -22,24 +20,28 @@ class SoaController extends Controller
     public function generateAllSOAs()
     {
         $accounts = $this->getAccountsForSOA();
+        $delaySeconds = 0; // start at 0 for the first email
 
         foreach ($accounts as $account) {
-            Log::info("Generating SOA for Account ID: {$account->id}, Account Number: {$account->account_number}");
+            Log::info("Queueing SOA for Account ID: {$account->id}");
 
-            $mail = new \App\Mail\SoaManagement($account);
+            // Dispatch the job with a staggered delay
+            SoaDelay::dispatch($account)
+                ->delay(now()->addSeconds($delaySeconds));
 
-            // Using `Mail::later` to send the email after a 5-second delay
-            Mail::to($account->customer->email)
-                ->later(now()->addSeconds(5), $mail);
+            // Increase delay by 6 seconds for the next account
+            $delaySeconds += 6;
         }
 
-        return redirect()->route('soa.index')->with('status', 'All SOAs have been generated successfully.');
+        return redirect()
+            ->route('soa.index')
+            ->with('status', count($accounts) . ' SOA jobs queued, 1 email every 6 seconds.');
     }
 
     private function getAccountsForSOA()
     {
-        return Account::whereDay('start_date', 20)->get();
-        // return Account::whereDay('start_date', \Carbon\Carbon::now()->addDays(10)->day)->get();
+        // Get accounts whose start_date day is 15
+        return Account::whereDay('start_date', 15)->get();
     }
 }
 
