@@ -11,7 +11,8 @@
     </style>
 </head>
 <body>
-    <h2>Transactions for {{ DateTime::createFromFormat('!m', $month)->format('F') }} {{ $year }}</h2>
+    <h1>Monthly Transaction Report</h1>
+    <h2>{{ DateTime::createFromFormat('!m', $month)->format('F') }} {{ $year }}</h2>
 
     @if($transactions->isEmpty())
         <p>No transactions found for this period.</p>
