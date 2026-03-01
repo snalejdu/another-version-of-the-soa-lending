@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Spatie\Browsershot\Browsershot;
+use Illuminate\Support\Facades\View;
 use App\Models\Account;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\SoaDelay;
@@ -38,10 +39,28 @@ class SoaController extends Controller
             ->with('status', count($accounts) . ' SOA jobs queued, 1 email every 6 seconds.');
     }
 
+    public function domBrowserShot($id)
+    {
+        $account = Account::with(['customer', 'transactions'])->findOrFail($id);
+
+        // render the same template used for the SOA email (Email.ForSoa)
+        $html = View::make('Email.ForSoa', compact('account'))->render();
+
+    $fileName = 'soa_dom_' . $account->id . '.png';
+    $filePath = storage_path('app/public/' . $fileName);
+
+    Browsershot::html($html)
+        ->windowSize(1200, 2000)
+        ->waitUntilNetworkIdle()
+        ->save($filePath);
+
+    return response()->download($filePath);
+}
+
     private function getAccountsForSOA()
     {
         // Get accounts whose start_date day is 15
-        return Account::whereDay('start_date', 15)->get();
+        return Account::whereDay('start_date', 10)->get();
     }
 }
 

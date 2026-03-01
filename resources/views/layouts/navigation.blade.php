@@ -26,7 +26,10 @@
                     </x-nav-link>
                     <x-nav-link :href="route('soa.index')" :active="request()->routeIs('soa.*')">
                         {{ __('SoaManagement') }}
-                    </x-responsive-nav-link>
+                    </x-nav-link>
+                    <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                        {{ __('Reports') }}
+                    </x-nav-link>
 
                 </div>
             </div>

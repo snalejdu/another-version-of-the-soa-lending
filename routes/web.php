@@ -46,9 +46,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/soa', [SoaController::class, 'soaGeneration'])->name('soa.index');
     Route::get('/soa/generate-all', [SoaController::class, 'generateAllSOAs'])->name('soa.generateAll');
 
+    Route::get('/soa/shot/{id}', [SoaController::class, 'domBrowserShot'])->name('soa.domShot');
+
     Route::resource('customers', CustomerController::class);
     Route::resource('accounts', AccountController::class);
     Route::resource('transactions', TransactionController::class);
+
+
+    Route::get('/reports', [\App\Http\Controllers\ReportsController::class, 'index'])->name('reports.index');
+    Route::post('/reports', [\App\Http\Controllers\ReportsController::class, 'generate'])->name('reports.generate');
 });
 
 require __DIR__.'/auth.php';
